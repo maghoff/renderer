@@ -32,3 +32,8 @@ pub fn fill(pointer: *mut u8, width: usize, height: usize, time: f64) {
 
     core::render(buf, width, height, time);
 }
+
+fn main() {
+    // We need main() for everything to work out with wasm.
+    // ... I think
+}
