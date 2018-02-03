@@ -1,5 +1,7 @@
 #![feature(allocator_api)]
 
+extern crate cgmath;
+
 mod core;
 
 use std::heap::{Alloc, Heap, Layout};

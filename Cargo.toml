@@ -3,6 +3,7 @@ name = "rust-wasm-canvas"
 version = "0.1.0"
 
 [dependencies]
+cgmath = "0.16.0"
 
 [profile.release]
 opt-level = "s"

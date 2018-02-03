@@ -8,6 +8,7 @@ fetch("rust.wasm").then(response =>
         env: {
             cos: Math.cos,
             sin: Math.sin,
+            Math_tan: Math.tan,
         }
     })
 ).then(results => {
