@@ -31,8 +31,8 @@ const MAP: &[u8] = b"\
     x        x\
     x        x\
     x        x\
-    x        x\
-    x        x\
+    x      x x\
+    xx       x\
     xxxxxxxxxx";
 
 const MAP_W: i32 = 10;
@@ -78,23 +78,23 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     );
 
     let mut coord = first_horizontal_intersection_coord;
-    let mut cell = origin_cell;
+    let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
     loop {
         let x = (coord.x / SQUARE_SZ).floor() as i32;
         if (x != cell.x) && is_wall(&Vector2::new(x, cell.y)) {
-            // It is apparent that row_delta.x is not near zero, since we
-            // have come to a different column on the map
-
             let intersection_x =
                 (if row_delta.x > 0. { cell.x+1 } else { cell.x }) as f64
                 * SQUARE_SZ;
+
+            // It is apparent that row_delta.x is not near zero, since we
+            // have come to a different column on the map
 
             let rows = (intersection_x - o.x) / row_delta.x;
 
             return o + row_delta * rows;
         }
         cell.x = x;
-        cell.y -= 1;
+        cell.y = ((coord + good_measure).y / SQUARE_SZ).floor() as i32;
 
         if is_wall_f(coord + good_measure) {
             return coord;
