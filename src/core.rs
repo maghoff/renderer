@@ -51,13 +51,10 @@ fn is_wall_f(coord: Vector2<f64>) -> bool {
     is_wall(&(coord / SQUARE_SZ).cast().unwrap())
 }
 
-fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
-    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
+fn cast_vertical_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+    assert!(dir.y.abs() > 0.7); // We can divide by dir.y
 
-    // Abort predominantly horizontal scans
-    if dir.x.abs() > dir.y.abs() {
-        return o+dir;
-    }
+    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
 
     // Check horizontal intersections
 
@@ -66,12 +63,12 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     if dir.y > 0. {
         dy = SQUARE_SZ - dy;
     }
-    let dist = dy / dir.y; // Degenerate: Division by something that could be close to zero
+    let dist = dy / dir.y;
 
     let first_horizontal_intersection_coord = o + dir * dist;
 
     // Scan map rows for intersections
-    let row_delta = dir * (SQUARE_SZ / dir.y.abs()); // Degenerate: Division by something that could be close to zero
+    let row_delta = dir * (SQUARE_SZ / dir.y.abs());
 
     let good_measure = Vector2::new(
         0.,
@@ -105,6 +102,68 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
             return coord;
         }
         coord += row_delta;
+    }
+}
+
+fn cast_horizontal_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+    assert!(dir.x.abs() > 0.7); // We can divide by dir.x
+
+    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
+
+    // Check vertical intersections
+
+    // Find first intersection point
+    let mut dx = o.x - (origin_cell.x as f64) * SQUARE_SZ;
+    if dir.x > 0. {
+        dx = SQUARE_SZ - dx;
+    }
+    let dist = dx / dir.x;
+
+    let first_vertical_intersection_coord = o + dir * dist;
+
+    // Scan map rows for intersections
+    let col_delta = dir * (SQUARE_SZ / dir.x.abs());
+
+    let good_measure = Vector2::new(
+        if dir.x > 0. {
+            SQUARE_SZ / 2.
+        } else {
+            -SQUARE_SZ / 2.
+        },
+        0.
+    );
+
+    let mut coord = first_vertical_intersection_coord;
+    let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
+    loop {
+        let y = (coord.y / SQUARE_SZ).floor() as i32;
+        if (y != cell.y) && is_wall(&Vector2::new(cell.x, y)) {
+            let intersection_y =
+                (if col_delta.y > 0. { cell.y+1 } else { cell.y }) as f64
+                * SQUARE_SZ;
+
+            // It is apparent that col_delta.y is not near zero, since we
+            // have come to a different column on the map
+
+            let cols = (intersection_y - o.y) / col_delta.y;
+
+            return o + col_delta * cols;
+        }
+        cell.x = ((coord + good_measure).x / SQUARE_SZ).floor() as i32;
+        cell.y = y;
+
+        if is_wall_f(coord + good_measure) {
+            return coord;
+        }
+        coord += col_delta;
+    }
+}
+
+fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+    if dir.x.abs() > dir.y.abs() {
+        cast_horizontal_ray(o, dir)
+    } else {
+        cast_vertical_ray(o, dir)
     }
 }
 
@@ -163,6 +222,8 @@ mod test {
     #[test]
     fn can_render() {
         let mut buf = [Pixel { r:0, g:0, b:0, a:0 }; 320*200];
-        render(&mut buf, 320, 200, 0.);
+        for ang in 0..10 {
+            render(&mut buf, 320, 200, ang as f64 * TAU / 10.);
+        }
     }
 }
