@@ -3,7 +3,7 @@ use cgmath::prelude::*;
 use cgmath::Vector2;
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Pixel {
     pub r: u8,
     pub g: u8,
@@ -54,6 +54,11 @@ fn is_wall_f(coord: Vector2<f64>) -> bool {
 fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
 
+    // Abort predominantly horizontal scans
+    if dir.x.abs() > dir.y.abs() {
+        return o+dir;
+    }
+
     // Check horizontal intersections
 
     // Find first intersection point
@@ -103,13 +108,13 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     }
 }
 
-pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _time: f64) {
+pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, time: f64) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
 
-    let pos = SQUARE_SZ * Vector2::new(5 as f64, 12 as f64);
-    let dir = Vector2::new(0., -1.).normalize();
+    let pos = SQUARE_SZ * Vector2::new(4.5 as f64, 6.5 as f64);
+    let dir = Vector2::new(time.cos(), time.sin());
     // --
 
     let projection_plane_half_width = projection_plane_width / 2.;
@@ -134,7 +139,7 @@ pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _tim
         assert!(projected_height >= 0.);
 
         let mid = screen_height as f64 / 2.;
-        let ceil = max((mid - projected_height/2.).floor() as usize, 0);
+        let ceil = max((mid - projected_height/2.).floor() as isize, 0) as usize;
         let floor = min((mid + projected_height/2.).floor() as usize, screen_height);
 
         for y in 0..ceil {
@@ -148,5 +153,16 @@ pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _tim
         for y in floor..screen_height {
             buf[y*screen_width + x] = FLOOR;
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_render() {
+        let mut buf = [Pixel { r:0, g:0, b:0, a:0 }; 320*200];
+        render(&mut buf, 320, 200, 0.);
     }
 }

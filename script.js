@@ -27,7 +27,7 @@ fetch("rust.wasm").then(response =>
     const img = new ImageData(buffer, width, height);
 
     function step(timestamp) {
-        mod.fill(pointer, width, height, timestamp/100);
+        mod.fill(pointer, width, height, timestamp/1000);
         ctx.putImageData(img, 0, 0);
         window.requestAnimationFrame(step);
     }
