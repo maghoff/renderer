@@ -25,6 +25,10 @@ const MAP: &[u8] = b"\
     x      x x\
     x        x\
     x        x\
+    x x      x\
+    x        x\
+    x        x\
+    x        x\
     x        x\
     x        x\
     x        x\
@@ -32,7 +36,7 @@ const MAP: &[u8] = b"\
     xxxxxxxxxx";
 
 const MAP_W: i32 = 10;
-const MAP_H: i32 = 10;
+const MAP_H: i32 = 14;
 
 fn is_wall(cell: &Vector2<i32>) -> bool {
     assert!(0 <= cell.x);
@@ -48,12 +52,12 @@ fn is_wall_f(coord: Vector2<f64>) -> bool {
 }
 
 fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
-    let cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
+    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
 
     // Check horizontal intersections
 
     // Find first intersection point
-    let mut dy = o.y - (cell.y as f64) * SQUARE_SZ;
+    let mut dy = o.y - (origin_cell.y as f64) * SQUARE_SZ;
     if dir.y > 0. {
         dy = SQUARE_SZ - dy;
     }
@@ -74,7 +78,24 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     );
 
     let mut coord = first_horizontal_intersection_coord;
+    let mut cell = origin_cell;
     loop {
+        let x = (coord.x / SQUARE_SZ).floor() as i32;
+        if (x != cell.x) && is_wall(&Vector2::new(x, cell.y)) {
+            // It is apparent that row_delta.x is not near zero, since we
+            // have come to a different column on the map
+
+            let intersection_x =
+                (if row_delta.x > 0. { cell.x+1 } else { cell.x }) as f64
+                * SQUARE_SZ;
+
+            let rows = (intersection_x - o.x) / row_delta.x;
+
+            return o + row_delta * rows;
+        }
+        cell.x = x;
+        cell.y -= 1;
+
         if is_wall_f(coord + good_measure) {
             return coord;
         }
@@ -87,7 +108,7 @@ pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _tim
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
 
-    let pos = SQUARE_SZ * Vector2::new(5 as f64, 9 as f64);
+    let pos = SQUARE_SZ * Vector2::new(5 as f64, 12 as f64);
     let dir = Vector2::new(0., -1.).normalize();
     // --
 
