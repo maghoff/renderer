@@ -42,7 +42,6 @@ fetch("rust.wasm").then(response =>
 
         mod.fill(
             pointer, width, height,
-            0,
             focusPoint.x, focusPoint.y,
             direction.x, direction.y
         );

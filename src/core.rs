@@ -1,15 +1,7 @@
 use std::cmp::{max, min};
 use cgmath::prelude::*;
 use cgmath::Vector2;
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Pixel {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-}
+use screen::{Pixel, Screen};
 
 const SQUARE_SZ: f64 = 64.;
 const TAU: f64 = 2. * ::std::f64::consts::PI;
@@ -167,14 +159,11 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     }
 }
 
-pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
+pub fn render(mut screen: Screen, pos: Vector2<f64>, dir: Vector2<f64>) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
     // --
-
-    let pos = Vector2::new(cx, cy);
-    let dir = Vector2::new(dx, dy);
 
     let projection_plane_half_width = projection_plane_width / 2.;
     let distance_to_projection_plane = projection_plane_half_width / (fov / 2.).tan();
@@ -184,9 +173,9 @@ pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _tim
     let projection_plane_center = distance_to_projection_plane * dir;
     let projection_plane_left = projection_plane_center - projection_plane_half_width * side;
 
-    let dside = side * projection_plane_width / (screen_width as f64);
+    let dside = side * projection_plane_width / (screen.width() as f64);
 
-    for x in 0..screen_width {
+    for x in 0..screen.width() {
         // Add 0.5 dside to cast the ray in the center of the column
         let ray_dir = projection_plane_left + dside * 0.5 + dside * (x as f64);
 
@@ -197,20 +186,20 @@ pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _tim
         let projected_height = w * WALL_HEIGHT * distance_to_projection_plane;
         assert!(projected_height >= 0.);
 
-        let mid = screen_height as f64 / 2.;
+        let mid = screen.height() as f64 / 2.;
         let ceil = max((mid - projected_height/2.).floor() as isize, 0) as usize;
-        let floor = min((mid + projected_height/2.).floor() as usize, screen_height);
+        let floor = min((mid + projected_height/2.).floor() as usize, screen.height());
 
         for y in 0..ceil {
-            buf[y*screen_width + x] = CEIL;
+            *screen.px(x, y) = CEIL;
         }
 
         for y in ceil..floor {
-            buf[y*screen_width + x] = WALL;
+            *screen.px(x, y) = WALL;
         }
 
-        for y in floor..screen_height {
-            buf[y*screen_width + x] = FLOOR;
+        for y in floor..screen.height() {
+            *screen.px(x, y) = FLOOR;
         }
     }
 }

@@ -3,11 +3,13 @@
 extern crate cgmath;
 
 mod core;
+mod screen;
 
 use std::heap::{Alloc, Heap, Layout};
 use std::mem;
-
 use std::slice;
+
+use cgmath::Vector2;
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -26,13 +28,16 @@ pub extern "C" fn dealloc(ptr: *mut u8, size: usize) {
 }
 
 #[no_mangle]
-pub fn fill(pointer: *mut u8, width: usize, height: usize, time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
+pub fn fill(pointer: *mut u8, width: usize, height: usize, cx: f64, cy: f64, dx: f64, dy: f64) {
     let pitch = width * 4;
     let buf_sz = pitch * height;
-
     let buf = unsafe { slice::from_raw_parts_mut(std::mem::transmute(pointer), buf_sz) };
+    let screen = screen::Screen::new(buf, width, height);
 
-    core::render(buf, width, height, time, cx, cy, dx, dy);
+    let pos = Vector2::new(cx, cy);
+    let dir = Vector2::new(dx, dy);
+
+    core::render(screen, pos, dir);
 }
 
 fn main() {
