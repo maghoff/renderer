@@ -26,12 +26,44 @@ fetch("rust.wasm").then(response =>
     const ctx = canvas.getContext('2d');
     const img = new ImageData(buffer, width, height);
 
-    function step(timestamp) {
-        mod.fill(pointer, width, height, timestamp/1000);
+    const focusPoint = {
+        x: gridSize * 4.5,
+        y: gridSize * 6.5,
+    };
+
+    const direction = {
+        x: 0,
+        y: -1,
+    };
+
+    let pendingRender = false;
+    function render(timestamp) {
+        pendingRender = false;
+
+        mod.fill(
+            pointer, width, height,
+            0,
+            focusPoint.x, focusPoint.y,
+            direction.x, direction.y
+        );
         ctx.putImageData(img, 0, 0);
-        window.requestAnimationFrame(step);
     }
 
-    step(0);
+    function scheduleRender() {
+        if (pendingRender) return;
+        pendingRender = true;
+        window.requestAnimationFrame(render);
+    }
+
+    function updateCamera(newFocusPoint, newDirection) {
+        focusPoint.x = newFocusPoint.x;
+        focusPoint.y = newFocusPoint.y;
+        direction.x = newDirection.x;
+        direction.y = newDirection.y;
+        scheduleRender();
+    };
+
+    interactiveMap(document.querySelector("svg"), updateCamera);
+    scheduleRender();
 })
 .catch(alert);

@@ -1,0 +1,37 @@
+.grid {
+    stroke: #ccc;
+    stroke-width: 1;
+}
+
+.camera--sightline {
+    stroke: #41f4a9;
+    stroke-width: 3;
+    stroke-dasharray: 5, 5;
+}
+
+.camera--focus {
+    cursor: grab;
+    fill: #42a1f4;
+}
+
+.camera--target {
+    cursor: grab;
+    stroke: #41f4a9;
+    stroke-width: 3;
+    stroke-dasharray: 5, 5;
+    fill: transparent;
+}
+
+.camera--target:hover {
+    stroke-dasharray: none;
+}
+
+.camera--direction {
+    stroke: #41f4a9;
+    stroke-width: 10;
+    stroke-linecap: round;
+}
+
+.drag {
+    cursor: grabbing;
+}

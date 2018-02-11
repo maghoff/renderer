@@ -26,13 +26,13 @@ pub extern "C" fn dealloc(ptr: *mut u8, size: usize) {
 }
 
 #[no_mangle]
-pub fn fill(pointer: *mut u8, width: usize, height: usize, time: f64) {
+pub fn fill(pointer: *mut u8, width: usize, height: usize, time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
     let pitch = width * 4;
     let buf_sz = pitch * height;
 
     let buf = unsafe { slice::from_raw_parts_mut(std::mem::transmute(pointer), buf_sz) };
 
-    core::render(buf, width, height, time);
+    core::render(buf, width, height, time, cx, cy, dx, dy);
 }
 
 fn main() {

@@ -2,10 +2,79 @@
 <html>
 <head>
 <title>Rust canvas</title>
+<link href="style.css" rel="stylesheet">
 </head>
 <body>
-<div id="container"></div>
-<canvas id="screen" width="320px" height="200px"></canvas>
+
+<div><canvas id="screen" width="320px" height="200px"></canvas></div>
+
+<div>
+<svg width="200px" height="280px" viewbox="0 0 640 896">
+    <marker id="arrowhead"
+        markerWidth="10" markerHeight="10"
+        refX="5" refY="5"
+        orient="auto"
+        markerUnits="strokeWidth"
+    >
+        <path d="M3,3 l3,2 l-3,2" fill="none" stroke="#41f4a9" stroke-linecap="round"/>
+    </marker>
+
+    <g class="grid">
+        <path d="M0,0 l0,896"/>
+        <path d="M64,0 l0,896"/>
+        <path d="M128,0 l0,896"/>
+        <path d="M196,0 l0,896"/>
+        <path d="M256,0 l0,896"/>
+        <path d="M320,0 l0,896"/>
+        <path d="M384,0 l0,896"/>
+        <path d="M448,0 l0,896"/>
+        <path d="M512,0 l0,896"/>
+        <path d="M576,0 l0,896"/>
+        <path d="M640,0 l0,896"/>
+
+        <path d="M0,0 l640,0"/>
+        <path d="M0,64 l640,0"/>
+        <path d="M0,128 l640,0"/>
+        <path d="M0,192 l640,0"/>
+        <path d="M0,256 l640,0"/>
+        <path d="M0,320 l640,0"/>
+        <path d="M0,384 l640,0"/>
+        <path d="M0,448 l640,0"/>
+        <path d="M0,512 l640,0"/>
+        <path d="M0,576 l640,0"/>
+        <path d="M0,640 l640,0"/>
+        <path d="M0,704 l640,0"/>
+        <path d="M0,768 l640,0"/>
+        <path d="M0,832 l640,0"/>
+    </g>
+
+    <g class="camera">
+        <line
+            x1="288" y1="416"
+            x2="288" y2="224"
+            class="camera--sightline"
+        />
+        <circle
+            cx="288" cy="416" r="32"
+            class="camera--focus"
+        />
+        <line
+            x1="288" y1="416"
+            x2="288" y2="352"
+            class="camera--direction"
+            marker-end="url(#arrowhead)"
+        />
+        <circle
+            cx="288" cy="224" r="32"
+            class="camera--target"
+        />
+    </g>
+
+</svg>
+</div>
+
+<script src="interactive-map.js"></script>
 <script src="script.js"></script>
+
 </body>
 </html>

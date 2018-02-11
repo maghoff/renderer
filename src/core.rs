@@ -167,14 +167,14 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     }
 }
 
-pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, time: f64) {
+pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
-
-    let pos = SQUARE_SZ * Vector2::new(4.5 as f64, 6.5 as f64);
-    let dir = Vector2::new(time.cos(), time.sin());
     // --
+
+    let pos = Vector2::new(cx, cy);
+    let dir = Vector2::new(dx, dy);
 
     let projection_plane_half_width = projection_plane_width / 2.;
     let distance_to_projection_plane = projection_plane_half_width / (fov / 2.).tan();
