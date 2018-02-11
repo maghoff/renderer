@@ -63,7 +63,7 @@ fn cast_vertical_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     if dir.y > 0. {
         dy = SQUARE_SZ - dy;
     }
-    let dist = dy / dir.y;
+    let dist = dy / dir.y.abs();
 
     let first_horizontal_intersection_coord = o + dir * dist;
 
@@ -117,7 +117,7 @@ fn cast_horizontal_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     if dir.x > 0. {
         dx = SQUARE_SZ - dx;
     }
-    let dist = dx / dir.x;
+    let dist = dx / dir.x.abs();
 
     let first_vertical_intersection_coord = o + dir * dist;
 
@@ -167,7 +167,7 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     }
 }
 
-pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
+pub fn render(buf: &mut [Pixel], screen_width: usize, screen_height: usize, _time: f64, cx: f64, cy: f64, dx: f64, dy: f64) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
