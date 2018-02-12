@@ -15,9 +15,7 @@ pub struct Screen<'a> {
 
 impl<'a> Screen<'a> {
     pub fn new(buf: &mut [Pixel], width: usize, height: usize) -> Screen {
-        let pitch = width * 4;
-        let buf_sz = pitch * height;
-        assert!(buf.len() == buf_sz);
+        assert!(buf.len() == width * height);
 
         Screen {
             buf,
