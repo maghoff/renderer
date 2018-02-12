@@ -116,7 +116,41 @@ function initCamera(cameraDom, callback) {
     });
 }
 
+function drawMap(dom) {
+    const map =
+        "xxxxxxxxxx" +
+        "x   x    x" +
+        "x      x x" +
+        "x        x" +
+        "x        x" +
+        "x x      x" +
+        "x        x" +
+        "x        x" +
+        "x        x" +
+        "x        x" +
+        "x        x" +
+        "x      x x" +
+        "xx       x" +
+        "xxxxxxxxxx";
+    const w = 10, h = 14;
+
+    for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+            const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            el.setAttribute("x", gridSize * x);
+            el.setAttribute("y", gridSize * y);
+            el.setAttribute("width", gridSize);
+            el.setAttribute("height", gridSize);
+            el.setAttribute("stroke", "none");
+            el.setAttribute("fill", map[y*w + x] == "x" ? "#00ff00" : "transparent");
+            dom.appendChild(el);
+        }
+    }
+}
+
 function interactiveMap(svg, updateCamera) {
+    drawMap(svg.querySelector(".map"));
+
     initCamera(
         svg.querySelector(".camera"),
         updateCamera
