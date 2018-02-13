@@ -1,6 +1,7 @@
 #![feature(allocator_api)]
 
 extern crate cgmath;
+extern crate ndarray;
 
 mod core;
 mod screen;
@@ -33,7 +34,12 @@ pub fn fill(
     cx: f64, cy: f64,
     dx: f64, dy: f64
 ) {
-    let screen_buf = unsafe { slice::from_raw_parts_mut(std::mem::transmute(screen_ptr), screen_width * screen_height) };
+    let screen_buf = unsafe {
+        slice::from_raw_parts_mut(
+            std::mem::transmute(screen_ptr),
+            screen_width * screen_height
+        )
+    };
     let mut screen = screen::Screen::new(screen_buf, screen_width, screen_height);
 
     let pos = Vector2::new(cx, cy);
