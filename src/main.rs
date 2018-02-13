@@ -11,6 +11,7 @@ use std::mem;
 use std::slice;
 
 use cgmath::Vector2;
+use ndarray::ArrayViewMut2;
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -40,7 +41,10 @@ pub fn fill(
             screen_width * screen_height
         )
     };
-    let mut screen = screen::Screen::new(screen_buf, screen_width, screen_height);
+    let mut screen = ArrayViewMut2::from_shape(
+        (screen_height, screen_width),
+        screen_buf
+    ).unwrap();
 
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);

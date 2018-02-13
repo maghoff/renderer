@@ -2,6 +2,7 @@ use std::cmp::{max, min};
 use cgmath::prelude::*;
 use cgmath::Vector2;
 use screen::{Pixel, Screen};
+use ndarray::ArrayViewMut2;
 
 const SQUARE_SZ: f64 = 64.;
 const TAU: f64 = 2. * ::std::f64::consts::PI;
@@ -159,7 +160,7 @@ fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     }
 }
 
-pub fn render(screen: &mut Screen, pos: Vector2<f64>, dir: Vector2<f64>) {
+pub fn render(screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
@@ -207,16 +208,16 @@ pub fn render(screen: &mut Screen, pos: Vector2<f64>, dir: Vector2<f64>) {
 #[cfg(test)]
 mod test {
     use super::*;
+    use ndarray::Array2;
 
     #[test]
     fn can_render() {
-        let mut buf = [Pixel { r:0, g:0, b:0, a:0 }; 320*200];
-        let mut screen = Screen::new(&mut buf, 320, 200);
+        let mut screen = Array2::default((200, 320));
         let pos = Vector2::new(MAP_W as f64 / 2. * SQUARE_SZ, MAP_H as f64 / 2. * SQUARE_SZ);
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(&mut screen, pos, dir);
+            render(&mut screen.view_mut(), pos, dir);
         }
     }
 }
