@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 use cgmath::prelude::*;
 use cgmath::Vector2;
 use screen::{Pixel, Screen};
-use ndarray::ArrayViewMut2;
+use ndarray::{ArrayView2, ArrayViewMut2};
 
 const SQUARE_SZ: f64 = 64.;
 const TAU: f64 = 2. * ::std::f64::consts::PI;
@@ -12,39 +12,16 @@ const CEIL: Pixel = Pixel { r: 255, g: 0, b: 0, a: 255 };
 const WALL: Pixel = Pixel { r: 0, g: 255, b: 0, a: 255 };
 const FLOOR: Pixel = Pixel { r: 0, g: 0, b: 255, a: 255 };
 
-const MAP: &[u8] = b"\
-    xxxxxxxxxx\
-    x   x    x\
-    x      x x\
-    x        x\
-    x        x\
-    x x      x\
-    x        x\
-    x        x\
-    x        x\
-    x        x\
-    x        x\
-    x      x x\
-    xx       x\
-    xxxxxxxxxx";
-
-const MAP_W: i32 = 10;
-const MAP_H: i32 = 14;
-
-fn is_wall(cell: &Vector2<i32>) -> bool {
-    assert!(0 <= cell.x);
-    assert!(cell.x < MAP_W);
-    assert!(0 <= cell.y);
-    assert!(cell.y < MAP_H);
-
-    MAP[(cell.y * MAP_W + cell.x) as usize] == b'x'
+fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> bool {
+    let cell = cell.cast().unwrap();
+    map[[cell.y, cell.x]] == b'x'
 }
 
-fn is_wall_f(coord: Vector2<f64>) -> bool {
-    is_wall(&(coord / SQUARE_SZ).cast().unwrap())
+fn is_wall_f(map: ArrayView2<u8>, coord: Vector2<f64>) -> bool {
+    is_wall(map, &(coord / SQUARE_SZ).cast().unwrap())
 }
 
-fn cast_vertical_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+fn cast_vertical_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     assert!(dir.y.abs() > 0.7); // We can divide by dir.y
 
     let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
@@ -76,7 +53,7 @@ fn cast_vertical_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
     loop {
         let x = (coord.x / SQUARE_SZ).floor() as i32;
-        if (x != cell.x) && is_wall(&Vector2::new(x, cell.y)) {
+        if (x != cell.x) && is_wall(map, &Vector2::new(x, cell.y)) {
             let intersection_x =
                 (if row_delta.x > 0. { cell.x+1 } else { cell.x }) as f64
                 * SQUARE_SZ;
@@ -91,14 +68,14 @@ fn cast_vertical_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
         cell.x = x;
         cell.y = ((coord + good_measure).y / SQUARE_SZ).floor() as i32;
 
-        if is_wall_f(coord + good_measure) {
+        if is_wall_f(map, coord + good_measure) {
             return coord;
         }
         coord += row_delta;
     }
 }
 
-fn cast_horizontal_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+fn cast_horizontal_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     assert!(dir.x.abs() > 0.7); // We can divide by dir.x
 
     let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
@@ -130,7 +107,7 @@ fn cast_horizontal_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
     loop {
         let y = (coord.y / SQUARE_SZ).floor() as i32;
-        if (y != cell.y) && is_wall(&Vector2::new(cell.x, y)) {
+        if (y != cell.y) && is_wall(map, &Vector2::new(cell.x, y)) {
             let intersection_y =
                 (if col_delta.y > 0. { cell.y+1 } else { cell.y }) as f64
                 * SQUARE_SZ;
@@ -145,22 +122,22 @@ fn cast_horizontal_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
         cell.x = ((coord + good_measure).x / SQUARE_SZ).floor() as i32;
         cell.y = y;
 
-        if is_wall_f(coord + good_measure) {
+        if is_wall_f(map, coord + good_measure) {
             return coord;
         }
         coord += col_delta;
     }
 }
 
-fn cast_ray(o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
+fn cast_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Vector2<f64> {
     if dir.x.abs() > dir.y.abs() {
-        cast_horizontal_ray(o, dir)
+        cast_horizontal_ray(map, o, dir)
     } else {
-        cast_vertical_ray(o, dir)
+        cast_vertical_ray(map, o, dir)
     }
 }
 
-pub fn render(screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>) {
+pub fn render(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
@@ -180,7 +157,7 @@ pub fn render(screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2
         // Add 0.5 dside to cast the ray in the center of the column
         let ray_dir = projection_plane_left + dside * 0.5 + dside * (x as f64);
 
-        let intersection_point = cast_ray(pos, ray_dir.normalize());
+        let intersection_point = cast_ray(map, pos, ray_dir.normalize());
         let z = (intersection_point - &pos).dot(dir);
         let w = 1./z;
 
@@ -213,11 +190,21 @@ mod test {
     #[test]
     fn can_render() {
         let mut screen = Array2::default((200, 320));
-        let pos = Vector2::new(MAP_W as f64 / 2. * SQUARE_SZ, MAP_H as f64 / 2. * SQUARE_SZ);
+        let map = ArrayView2::from_shape(
+            (5, 5),
+            b"\
+            xxxxx\
+            x   x\
+            x   x\
+            x   x\
+            xxxxx"
+        ).unwrap();
+
+        let pos = Vector2::new(map.dim().1 as f64 / 2. * SQUARE_SZ, map.dim().0 as f64 / 2. * SQUARE_SZ);
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(&mut screen.view_mut(), pos, dir);
+            render(map, &mut screen.view_mut(), pos, dir);
         }
     }
 }

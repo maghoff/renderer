@@ -11,7 +11,7 @@ use std::mem;
 use std::slice;
 
 use cgmath::Vector2;
-use ndarray::ArrayViewMut2;
+use ndarray::{ArrayView2, ArrayViewMut2};
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -46,10 +46,31 @@ pub fn fill(
         screen_buf
     ).unwrap();
 
+    const MAP: &[u8] = b"\
+        xxxxxxxxxx\
+        x   x    x\
+        x      x x\
+        x        x\
+        x        x\
+        x x      x\
+        x        x\
+        x        x\
+        x        x\
+        x        x\
+        x        x\
+        x      x x\
+        xx       x\
+        xxxxxxxxxx";
+
+    const MAP_W: usize = 10;
+    const MAP_H: usize = 14;
+
+    let map = ArrayView2::from_shape((MAP_H, MAP_W), MAP).unwrap();
+
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(&mut screen, pos, dir);
+    core::render(map, &mut screen, pos, dir);
 }
 
 fn main() {
