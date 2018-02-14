@@ -1,23 +1,5 @@
 'use strict';
 
-const map =
-    "xxxxxxxxxx" +
-    "x   x    x" +
-    "x      x x" +
-    "x        x" +
-    "x        x" +
-    "x x      x" +
-    "x        x" +
-    "x        x" +
-    "x        x" +
-    "x        x" +
-    "x        x" +
-    "x      x x" +
-    "xx       x" +
-    "xxxxxxxxxx";
-
-const mapWidth = 10, mapHeight = 14;
-
 // Fetch and instantiate our wasm module
 fetch("rust.wasm").then(response =>
     response.arrayBuffer()
@@ -36,28 +18,49 @@ fetch("rust.wasm").then(response =>
     const width  = canvas.width;
     const height = canvas.height;
 
-    // Create a map buffer that's shared between JS and WASM:
+    const map =
+        "xxxxxxxxxxxxxxxx" +
+        "x   x          x" +
+        "x              x" +
+        "x   x          x" +
+        "xxxxx          x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "x              x" +
+        "xxxxxxxxxxxxxxxx";
+    const mapWidth = 16, mapHeight = 14;
+
+    // Do allocations up front, as they may invalidate mod.memory.buffer
+    const screenByteSize = width * height * 4;
+    const screenPtr = mod.alloc(screenByteSize);
+
     const mapByteSize = mapWidth * mapHeight;
     const mapPtr = mod.alloc(mapByteSize);
+
+    // Data shared between JS and WASM:
     const mapBuf = new Uint8ClampedArray(mod.memory.buffer, mapPtr, mapByteSize);
     for (let i = 0; i < mapByteSize; ++i) mapBuf[i] = map.charCodeAt(i);
 
-    // Create a screen buffer that's shared between JS and WASM:
-    const screenByteSize = width * height * 4;
-    const screenPtr = mod.alloc(screenByteSize);
     const screenBuf = new Uint8ClampedArray(mod.memory.buffer, screenPtr, screenByteSize);
+
+    // --
 
     const ctx = canvas.getContext('2d');
     const img = new ImageData(screenBuf, width, height);
 
     const focusPoint = {
-        x: gridSize * 4.5,
-        y: gridSize * 6.5,
+        x: gridSize * 2.5,
+        y: gridSize * 2.5,
     };
 
     const direction = {
-        x: 0,
-        y: -1,
+        x: 1,
+        y: 0,
     };
 
     let pendingRender = false;
@@ -85,9 +88,23 @@ fetch("rust.wasm").then(response =>
         direction.x = newDirection.x;
         direction.y = newDirection.y;
         scheduleRender();
-    };
+    }
 
-    interactiveMap(document.querySelector("svg"), updateCamera);
+    function writeMap(cell, value) {
+        mapBuf[cell.y * mapWidth + cell.x] = value;
+        scheduleRender();
+    }
+
+    interactiveMap(
+        document.querySelector("svg"),
+        {
+            data: mapBuf,
+            width: mapWidth,
+            height: mapHeight,
+        },
+        updateCamera,
+        writeMap,
+    );
     scheduleRender();
 })
 .catch(alert);

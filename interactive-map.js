@@ -1,5 +1,8 @@
 'use strict';
 
+const OPEN = " ".charCodeAt(0);
+const WALL = "x".charCodeAt(0);
+
 const gridSize = 64;
 
 // https://www.sitepoint.com/how-to-translate-from-dom-to-svg-coordinates-and-back-again/
@@ -17,6 +20,10 @@ function svgPoint(element, x, y) {
 function draggable(node, callback) {
     let dragging = false;
 
+    node.addEventListener("click", ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+    });
     node.addEventListener("mousedown", ev => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -45,18 +52,18 @@ function draggable(node, callback) {
 
 function initCamera(cameraDom, callback) {
     const focusPoint = {
-        x: gridSize * 4.5,
-        y: gridSize * 6.5,
+        x: gridSize * 2.5,
+        y: gridSize * 2.5,
     };
 
     const targetPoint = {
-        x: gridSize * 4.5,
-        y: gridSize * 3.5,
+        x: gridSize * 5.5,
+        y: gridSize * 2.5,
     };
 
     let direction = {
-        x: 0,
-        y: -1,
+        x: 1,
+        y: 0,
     };
 
     const dom = {
@@ -116,23 +123,73 @@ function initCamera(cameraDom, callback) {
     });
 }
 
-function drawMap(dom) {
-    for (let y = 0; y < mapHeight; ++y) {
-        for (let x = 0; x < mapWidth; ++x) {
+function drawMap(dom, map) {
+    for (let y = 0; y < map.height; ++y) {
+        const row = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        row.setAttribute("class", "map--row");
+        dom.appendChild(row);
+
+        for (let x = 0; x < map.width; ++x) {
+            const cellClass = map.data[y*map.width + x] == WALL ? "map--cell--wall" : "map--cell--open";
+
             const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             el.setAttribute("x", gridSize * x);
             el.setAttribute("y", gridSize * y);
             el.setAttribute("width", gridSize);
             el.setAttribute("height", gridSize);
-            el.setAttribute("stroke", "none");
-            el.setAttribute("fill", map[y*mapWidth + x] == "x" ? "#00ff00" : "transparent");
-            dom.appendChild(el);
+            el.setAttribute("class", "map--cell " + cellClass);
+            row.appendChild(el);
         }
     }
 }
 
-function interactiveMap(svg, updateCamera) {
-    drawMap(svg.querySelector(".map"));
+function drawGrid(dom, map) {
+    for (let x = 0; x < map.width; ++x) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        el.setAttribute("x1", gridSize * x);
+        el.setAttribute("y1", gridSize * 0);
+        el.setAttribute("x2", gridSize * x);
+        el.setAttribute("y2", gridSize * map.height);
+        dom.appendChild(el);
+    }
+    for (let y = 0; y < map.height; ++y) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        el.setAttribute("x1", gridSize * 0);
+        el.setAttribute("y1", gridSize * y);
+        el.setAttribute("x2", gridSize * map.width);
+        el.setAttribute("y2", gridSize * y);
+        dom.appendChild(el);
+    }
+}
+
+function mapEditor(dom, map, writeMap) {
+    dom.addEventListener("click", ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const tr = svgPoint(dom, ev.x, ev.y);
+        const cell = {
+            x: (tr.x / gridSize) | 0,
+            y: (tr.y / gridSize) | 0,
+        };
+
+        const prev = map.data[cell.y * map.width + cell.x];
+        const next = prev == WALL ? OPEN : WALL;
+        writeMap(cell, next);
+    });
+}
+
+function interactiveMap(svg, map, updateCamera, writeMap) {
+    drawMap(svg.querySelector(".map"), map);
+    drawGrid(svg.querySelector(".grid"), map);
+
+    mapEditor(svg, map, function (cell, value) {
+        const cellClass = value == WALL ? "map--cell--wall" : "map--cell--open";
+        const sq = svg.querySelector(`.map>:nth-child(${cell.y + 1})>:nth-child(${cell.x + 1})`);
+        sq.setAttribute("class", "map--cell " + cellClass);
+
+        writeMap(cell, value);
+    });
 
     initCamera(
         svg.querySelector(".camera"),

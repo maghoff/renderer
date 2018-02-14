@@ -11,7 +11,7 @@
 <div><canvas id="screen" width="320px" height="200px"></canvas></div>
 
 <div>
-<svg width="200px" height="280px" viewbox="0 0 640 896">
+<svg width="320px" height="280px" viewbox="0 0 1024 896">
     <marker id="arrowhead"
         markerWidth="10" markerHeight="10"
         refX="5" refY="5"
@@ -21,60 +21,30 @@
         <path d="M3,3 l3,2 l-3,2" fill="none" stroke="#41f4a9" stroke-linecap="round"/>
     </marker>
 
-    <g class="map">
-    </g>
-
-    <g class="grid">
-        <path d="M0,0 l0,896"/>
-        <path d="M64,0 l0,896"/>
-        <path d="M128,0 l0,896"/>
-        <path d="M192,0 l0,896"/>
-        <path d="M256,0 l0,896"/>
-        <path d="M320,0 l0,896"/>
-        <path d="M384,0 l0,896"/>
-        <path d="M448,0 l0,896"/>
-        <path d="M512,0 l0,896"/>
-        <path d="M576,0 l0,896"/>
-        <path d="M640,0 l0,896"/>
-
-        <path d="M0,0 l640,0"/>
-        <path d="M0,64 l640,0"/>
-        <path d="M0,128 l640,0"/>
-        <path d="M0,192 l640,0"/>
-        <path d="M0,256 l640,0"/>
-        <path d="M0,320 l640,0"/>
-        <path d="M0,384 l640,0"/>
-        <path d="M0,448 l640,0"/>
-        <path d="M0,512 l640,0"/>
-        <path d="M0,576 l640,0"/>
-        <path d="M0,640 l640,0"/>
-        <path d="M0,704 l640,0"/>
-        <path d="M0,768 l640,0"/>
-        <path d="M0,832 l640,0"/>
-    </g>
+    <g class="map"></g>
+    <g class="grid"></g>
 
     <g class="camera">
         <line
-            x1="288" y1="416"
-            x2="288" y2="224"
+            x1="160" y1="160"
+            x2="352" y2="160"
             class="camera--sightline"
         />
         <line
-            x1="288" y1="416"
-            x2="288" y2="352"
+            x1="160" y1="160"
+            x2="224" y2="160"
             class="camera--direction"
             marker-end="url(#arrowhead)"
         />
         <circle
-            cx="288" cy="416" r="32"
+            cx="160" cy="160" r="32"
             class="camera--focus"
         />
         <circle
-            cx="288" cy="224" r="32"
+            cx="352" cy="160" r="32"
             class="camera--target"
         />
     </g>
-
 </svg>
 </div>
 

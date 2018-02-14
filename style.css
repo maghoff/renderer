@@ -1,6 +1,7 @@
 .grid {
     stroke: #ccc;
     stroke-width: 1;
+    pointer-events: none;
 }
 
 .camera--sightline {
@@ -34,4 +35,19 @@
 
 .drag {
     cursor: grabbing;
+}
+
+.map--cell {
+    stroke: none;
+}
+
+.map--cell--wall {
+    fill: #00ff00;
+}
+.map--cell--open {
+    fill: transparent;
+}
+
+.map--cell:hover {
+    stroke: black;
 }
