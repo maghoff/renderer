@@ -1,5 +1,23 @@
 'use strict';
 
+const map =
+    "xxxxxxxxxx" +
+    "x   x    x" +
+    "x      x x" +
+    "x        x" +
+    "x        x" +
+    "x x      x" +
+    "x        x" +
+    "x        x" +
+    "x        x" +
+    "x        x" +
+    "x        x" +
+    "x      x x" +
+    "xx       x" +
+    "xxxxxxxxxx";
+
+const mapWidth = 10, mapHeight = 14;
+
 // Fetch and instantiate our wasm module
 fetch("rust.wasm").then(response =>
     response.arrayBuffer()
@@ -17,14 +35,20 @@ fetch("rust.wasm").then(response =>
 
     const width  = canvas.width;
     const height = canvas.height;
-    const byteSize = width * height * 4;
 
-    // Create a buffer that's shared between JS and WASM:
-    const pointer = mod.alloc(byteSize);
-    const buffer = new Uint8ClampedArray(mod.memory.buffer, pointer, byteSize);
+    // Create a map buffer that's shared between JS and WASM:
+    const mapByteSize = mapWidth * mapHeight;
+    const mapPtr = mod.alloc(mapByteSize);
+    const mapBuf = new Uint8ClampedArray(mod.memory.buffer, mapPtr, mapByteSize);
+    for (let i = 0; i < mapByteSize; ++i) mapBuf[i] = map.charCodeAt(i);
+
+    // Create a screen buffer that's shared between JS and WASM:
+    const screenByteSize = width * height * 4;
+    const screenPtr = mod.alloc(screenByteSize);
+    const screenBuf = new Uint8ClampedArray(mod.memory.buffer, screenPtr, screenByteSize);
 
     const ctx = canvas.getContext('2d');
-    const img = new ImageData(buffer, width, height);
+    const img = new ImageData(screenBuf, width, height);
 
     const focusPoint = {
         x: gridSize * 4.5,
@@ -41,7 +65,8 @@ fetch("rust.wasm").then(response =>
         pendingRender = false;
 
         mod.fill(
-            pointer, width, height,
+            mapPtr, mapWidth, mapHeight,
+            screenPtr, width, height,
             focusPoint.x, focusPoint.y,
             direction.x, direction.y
         );

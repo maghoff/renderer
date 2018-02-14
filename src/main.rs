@@ -31,11 +31,12 @@ pub extern "C" fn dealloc(ptr: *mut u8, size: usize) {
 
 #[no_mangle]
 pub fn fill(
+    map_ptr: *mut u8, map_width: usize, map_height: usize,
     screen_ptr: *mut u8, screen_width: usize, screen_height: usize,
     cx: f64, cy: f64,
     dx: f64, dy: f64
 ) {
-    let screen_buf = unsafe {
+    let screen_slice = unsafe {
         slice::from_raw_parts_mut(
             std::mem::transmute(screen_ptr),
             screen_width * screen_height
@@ -43,29 +44,16 @@ pub fn fill(
     };
     let mut screen = ArrayViewMut2::from_shape(
         (screen_height, screen_width),
-        screen_buf
+        screen_slice
     ).unwrap();
 
-    const MAP: &[u8] = b"\
-        xxxxxxxxxx\
-        x   x    x\
-        x      x x\
-        x        x\
-        x        x\
-        x x      x\
-        x        x\
-        x        x\
-        x        x\
-        x        x\
-        x        x\
-        x      x x\
-        xx       x\
-        xxxxxxxxxx";
-
-    const MAP_W: usize = 10;
-    const MAP_H: usize = 14;
-
-    let map = ArrayView2::from_shape((MAP_H, MAP_W), MAP).unwrap();
+    let map_slice = unsafe {
+        slice::from_raw_parts(
+            std::mem::transmute(map_ptr),
+            map_width * map_height
+        )
+    };
+    let map = ArrayView2::from_shape((map_height, map_width), map_slice).unwrap();
 
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
