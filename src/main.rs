@@ -3,6 +3,8 @@
 extern crate cgmath;
 extern crate ndarray;
 
+mod consts;
+mod continuous;
 mod core;
 mod screen;
 
@@ -58,7 +60,7 @@ pub fn fill(
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(map, &mut screen, pos, dir);
+    core::render(map, &mut screen, pos, dir, continuous::cast_ray);
 }
 
 fn main() {
