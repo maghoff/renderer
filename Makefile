@@ -1,5 +1,5 @@
 all:
-	cargo +nightly build --target=wasm32-unknown-unknown --release
+	CARGO_INCREMENTAL=0 cargo +nightly build --target=wasm32-unknown-unknown --release
 	wasm-gc ./target/wasm32-unknown-unknown/release/rust-wasm-canvas.wasm ./rust.wasm
 
 test:
