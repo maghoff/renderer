@@ -18,38 +18,21 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     assert!(dir.x >= 0.7); // We can divide by x
 
     let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
-    if origin_cell.x < 0 || origin_cell.x as usize >= map.dim().0 { return None; }
-    if origin_cell.y < 0 || origin_cell.y as usize >= map.dim().1 { return None; }
+    if is_wall(map, &origin_cell)? { return None; }
 
-    // Find first vertical intersection point
-    let dx = (o.x / SQUARE_SZ + 1.).floor() * SQUARE_SZ - o.x;
-    let dist = dx / dir.x;
-    let first_vertical_intersection_coord = o + dir * dist;
+    let first_vertical_intersection_coord = {
+        let dx = (o.x / SQUARE_SZ + 1.).floor() * SQUARE_SZ - o.x;
+        let dist = dx / dir.x;
 
-    // Scan map columns for intersections
-    let col_delta = dir * (SQUARE_SZ / dir.x);
+        o + dir * dist
+    };
 
     let start_x = (first_vertical_intersection_coord.x / SQUARE_SZ).ceil() as i32;
-
+    let step_y = dir.y * (SQUARE_SZ / dir.x);
     let mut y = first_vertical_intersection_coord.y;
 
-    // Special case: Is there a horizontal intersection before the first vertical one?
-    if origin_cell.y != (y / SQUARE_SZ) as i32 &&
-        is_wall(map, &vec2(origin_cell.x, (y / SQUARE_SZ) as i32))?
-    {
-        let intersection_y = (y / SQUARE_SZ).floor() * SQUARE_SZ;
-        let dist = (intersection_y - o.y) / dir.y;
-        return Some(o + dir * dist);
-    }
-
     for x in start_x..(map.dim().1 as i32) {
-        if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
-            // Intersection with vertical line
-            return Some(vec2(x as f64 * SQUARE_SZ, y));
-        }
-
-        y += col_delta.y;
-        if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
+        if is_wall(map, &vec2(x - 1, (y / SQUARE_SZ) as i32))? {
             // Intersection with horizontal line
 
             let intersection_y = (y / SQUARE_SZ).floor() * SQUARE_SZ;
@@ -60,6 +43,13 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
 
             return Some(o + dir * dist);
         }
+
+        if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
+            // Intersection with vertical line
+            return Some(vec2(x as f64 * SQUARE_SZ, y));
+        }
+
+        y += step_y;
     }
 
     return None;
