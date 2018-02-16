@@ -21,42 +21,44 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     if origin_cell.x < 0 || origin_cell.x as usize >= map.dim().0 { return None; }
     if origin_cell.y < 0 || origin_cell.y as usize >= map.dim().1 { return None; }
 
-    // Check vertical intersections
-
-    // Find first intersection point
-    // BUG! First intersection point could be horizontal!
-    let dx = ((origin_cell.x + 1) as f64) * SQUARE_SZ - o.x;
+    // Find first vertical intersection point
+    let dx = (o.x / SQUARE_SZ + 1.).floor() * SQUARE_SZ - o.x;
     let dist = dx / dir.x;
-
     let first_vertical_intersection_coord = o + dir * dist;
 
     // Scan map columns for intersections
     let col_delta = dir * (SQUARE_SZ / dir.x);
 
-    let good_measure = Vector2::new(SQUARE_SZ / 2., 0.);
+    let start_x = (first_vertical_intersection_coord.x / SQUARE_SZ).ceil() as i32;
 
-    let coord = first_vertical_intersection_coord;
-    let cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
+    let mut y = first_vertical_intersection_coord.y;
 
-    let mut y = coord.y;
-    for x in cell.x..(map.dim().1 as i32) {
+    // Special case: Is there a horizontal intersection before the first vertical one?
+    if origin_cell.y != (y / SQUARE_SZ) as i32 &&
+        is_wall(map, &vec2(origin_cell.x, (y / SQUARE_SZ) as i32))?
+    {
+        let intersection_y = (y / SQUARE_SZ).floor() * SQUARE_SZ;
+        let dist = (intersection_y - o.y) / dir.y;
+        return Some(o + dir * dist);
+    }
+
+    for x in start_x..(map.dim().1 as i32) {
         if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
             // Intersection with vertical line
             return Some(vec2(x as f64 * SQUARE_SZ, y));
         }
-        y += col_delta.y;
 
-        // Could check if y-cell has changed, but this gives the same result:
+        y += col_delta.y;
         if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
             // Intersection with horizontal line
 
             let intersection_y = (y / SQUARE_SZ).floor() * SQUARE_SZ;
 
-            // It is apparent that col_delta.y is not near zero, since we
+            // It is apparent that dir.y is not near zero, since we
             // have come to a different column on the map
-            let cols = (intersection_y - o.y) / col_delta.y;
+            let dist = (intersection_y - o.y) / dir.y;
 
-            return Some(o + col_delta * cols);
+            return Some(o + dir * dist);
         }
     }
 
