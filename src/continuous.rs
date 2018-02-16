@@ -1,4 +1,4 @@
-use cgmath::Vector2;
+use cgmath::{vec2, Vector2};
 use ndarray::ArrayView2;
 
 use consts::*;
@@ -74,60 +74,15 @@ fn cast_vertical_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) ->
 fn cast_horizontal_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
     assert!(dir.x.abs() > 0.7); // We can divide by dir.x
 
-    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
-
-    // Check vertical intersections
-
-    // Find first intersection point
-    // BUG! First intersection point could be horizontal!
-    let mut dx = o.x - (origin_cell.x as f64) * SQUARE_SZ;
-    if dir.x > 0. {
-        dx = SQUARE_SZ - dx;
-    }
-    let dist = dx / dir.x.abs();
-
-    let first_vertical_intersection_coord = o + dir * dist;
-
-    // Scan map columns for intersections
-    let col_delta = dir * (SQUARE_SZ / dir.x.abs());
-
-    let good_measure = Vector2::new(
-        if dir.x > 0. {
-            SQUARE_SZ / 2.
-        } else {
-            -SQUARE_SZ / 2.
-        },
-        0.
-    );
-
-    let mut coord = first_vertical_intersection_coord;
-    let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
-    loop {
-        let y = (coord.y / SQUARE_SZ).floor() as i32;
-        if y < 0 || y >= map.dim().0 as i32 { return None; }
-
-        if (y != cell.y) && is_wall(map, &Vector2::new(cell.x, y)) {
-            let intersection_y =
-                (if col_delta.y > 0. { cell.y+1 } else { cell.y }) as f64
-                * SQUARE_SZ;
-
-            // It is apparent that col_delta.y is not near zero, since we
-            // have come to a different column on the map
-
-            let cols = (intersection_y - o.y) / col_delta.y;
-
-            return Some(o + col_delta * cols);
-        }
-        cell.x = ((coord + good_measure).x / SQUARE_SZ).floor() as i32;
-        cell.y = y;
-
-        if cell.x < 0 || cell.x >= map.dim().1 as i32 { return None; }
-
-        if is_wall_f(map, coord + good_measure) {
-            return Some(coord);
-        }
-        coord += col_delta;
-    }
+    let transposed_map = map.t();
+    return match cast_vertical_ray(
+        transposed_map,
+        vec2(o.y, o.x),
+        vec2(dir.y, dir.x)
+    ) {
+        Some(v) => Some(vec2(v.y, v.x)),
+        None => None
+    };
 }
 
 pub fn cast_ray(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
