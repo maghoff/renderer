@@ -91,4 +91,25 @@ mod test {
             render(map, &mut screen.view_mut(), pos, dir, continuous::cast_ray);
         }
     }
+
+    #[test]
+    fn can_render_holes() {
+        let mut screen = Array2::default((200, 320));
+        let map = ArrayView2::from_shape(
+            (5, 5),
+            b"\
+            xx xx\
+            x   x\
+            x    \
+            x   x\
+            xx xx"
+        ).unwrap();
+
+        let pos = Vector2::new(map.dim().1 as f64 / 2. * SQUARE_SZ, map.dim().0 as f64 / 2. * SQUARE_SZ);
+        for ang in 0..10 {
+            let rad = ang as f64 * TAU / 10.;
+            let dir = Vector2::new(rad.cos(), rad.sin());
+            render(map, &mut screen.view_mut(), pos, dir, continuous::cast_ray);
+        }
+    }
 }
