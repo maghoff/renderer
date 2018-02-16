@@ -11,10 +11,6 @@ fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> Option<bool> {
     Some(map[[cell.y, cell.x]] == b'x')
 }
 
-fn is_wall_f(map: ArrayView2<u8>, coord: Vector2<f64>) -> Option<bool> {
-    is_wall(map, &(coord / SQUARE_SZ).cast().unwrap())
-}
-
 fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
     assert!(dir.y >= 0.); // We're going south
     assert!(dir.x >= 0.); // We're going east
@@ -22,12 +18,14 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     assert!(dir.x >= 0.7); // We can divide by x
 
     let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
+    if origin_cell.x < 0 || origin_cell.x as usize >= map.dim().0 { return None; }
+    if origin_cell.y < 0 || origin_cell.y as usize >= map.dim().1 { return None; }
 
     // Check vertical intersections
 
     // Find first intersection point
     // BUG! First intersection point could be horizontal!
-    let dx = SQUARE_SZ - (o.x - (origin_cell.x as f64) * SQUARE_SZ);
+    let dx = ((origin_cell.x + 1) as f64) * SQUARE_SZ - o.x;
     let dist = dx / dir.x;
 
     let first_vertical_intersection_coord = o + dir * dist;
@@ -37,28 +35,32 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
 
     let good_measure = Vector2::new(SQUARE_SZ / 2., 0.);
 
-    let mut coord = first_vertical_intersection_coord;
-    let mut cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
-    loop {
-        let y = (coord.y / SQUARE_SZ).floor() as i32;
-        if (y != cell.y) && is_wall(map, &Vector2::new(cell.x, y))? {
-            let intersection_y = (cell.y + 1) as f64 * SQUARE_SZ;
+    let coord = first_vertical_intersection_coord;
+    let cell: Vector2<i32> = ((coord + good_measure) / SQUARE_SZ).cast().unwrap();
+
+    let mut y = coord.y;
+    for x in cell.x..(map.dim().1 as i32) {
+        if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
+            // Intersection with vertical line
+            return Some(vec2(x as f64 * SQUARE_SZ, y));
+        }
+        y += col_delta.y;
+
+        // Could check if y-cell has changed, but this gives the same result:
+        if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
+            // Intersection with horizontal line
+
+            let intersection_y = (y / SQUARE_SZ).floor() * SQUARE_SZ;
 
             // It is apparent that col_delta.y is not near zero, since we
             // have come to a different column on the map
-
             let cols = (intersection_y - o.y) / col_delta.y;
 
             return Some(o + col_delta * cols);
         }
-        cell.x = ((coord + good_measure).x / SQUARE_SZ).floor() as i32;
-        cell.y = y;
-
-        if is_wall_f(map, coord + good_measure)? {
-            return Some(coord);
-        }
-        coord += col_delta;
     }
+
+    return None;
 }
 
 fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
