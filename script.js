@@ -1,18 +1,39 @@
 'use strict';
 
-// Fetch and instantiate our wasm module
-fetch("rust.wasm").then(response =>
-    response.arrayBuffer()
-).then(bytes =>
-    WebAssembly.instantiate(bytes, {
-        env: {
-            cos: Math.cos,
-            sin: Math.sin,
-            Math_tan: Math.tan,
-        }
-    })
-).then(results => {
-    const mod = results.instance.exports;
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+const wasm =
+    fetch("rust.wasm").then(response =>
+        response.arrayBuffer()
+    ).then(bytes =>
+        WebAssembly.instantiate(bytes, {
+            env: {
+                cos: Math.cos,
+                sin: Math.sin,
+                Math_tan: Math.tan,
+            }
+        })
+    );
+
+const textures = loadImage("textures.png")
+    .then(img => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        return ctx.getImageData(0, 0, img.width, img.height);
+    });
+
+Promise.all([wasm, textures]).then(([wasm, textures]) => {
+    const mod = wasm.instance.exports;
     const canvas = document.getElementById('screen');
 
     const width  = canvas.width;
@@ -42,16 +63,22 @@ fetch("rust.wasm").then(response =>
     const mapByteSize = mapWidth * mapHeight;
     const mapPtr = mod.alloc(mapByteSize);
 
+    const texturesByteSize = textures.width * textures.height * 4;
+    const texturesPtr = mod.alloc(texturesByteSize);
+
     // Data shared between JS and WASM:
     const mapBuf = new Uint8ClampedArray(mod.memory.buffer, mapPtr, mapByteSize);
     for (let i = 0; i < mapByteSize; ++i) mapBuf[i] = map.charCodeAt(i);
 
     const screenBuf = new Uint8ClampedArray(mod.memory.buffer, screenPtr, screenByteSize);
+    const img = new ImageData(screenBuf, width, height);
+
+    const texturesBuf = new Uint8ClampedArray(mod.memory.buffer, texturesPtr, texturesByteSize);
+    texturesBuf.set(textures.data);
 
     // --
 
     const ctx = canvas.getContext('2d');
-    const img = new ImageData(screenBuf, width, height);
 
     const focusPoint = {
         x: gridSize * 2.5,
@@ -70,6 +97,7 @@ fetch("rust.wasm").then(response =>
         mod.fill(
             mapPtr, mapWidth, mapHeight,
             screenPtr, width, height,
+            texturesPtr, textures.width, textures.height,
             focusPoint.x, focusPoint.y,
             direction.x, direction.y
         );

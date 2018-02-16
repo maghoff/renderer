@@ -1,7 +1,7 @@
 #![feature(allocator_api)]
 
+#[macro_use] extern crate ndarray;
 extern crate cgmath;
-extern crate ndarray;
 
 mod consts;
 mod continuous;
@@ -13,7 +13,7 @@ use std::mem;
 use std::slice;
 
 use cgmath::Vector2;
-use ndarray::{ArrayView2, ArrayViewMut2};
+use ndarray::{ArrayView2, ArrayViewMut2, ArrayView4, ShapeBuilder};
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -35,6 +35,7 @@ pub extern "C" fn dealloc(ptr: *mut u8, size: usize) {
 pub fn fill(
     map_ptr: *mut u8, map_width: usize, map_height: usize,
     screen_ptr: *mut u8, screen_width: usize, screen_height: usize,
+    textures_ptr: *mut u8, textures_width: usize, textures_height: usize,
     cx: f64, cy: f64,
     dx: f64, dy: f64
 ) {
@@ -57,10 +58,22 @@ pub fn fill(
     };
     let map = ArrayView2::from_shape((map_height, map_width), map_slice).unwrap();
 
+    let textures_slice: &[screen::Pixel] = unsafe {
+        slice::from_raw_parts(
+            std::mem::transmute(textures_ptr),
+            textures_width * textures_height
+        )
+    };
+    let textures = ArrayView4::from_shape(
+        (19, 6, 64, 64).strides((64*6*64, 64, 64*6, 1)),
+        textures_slice
+    ).unwrap();
+    let wall: ArrayView2<screen::Pixel> = textures.slice(s![0, 0, .., ..]);
+
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(map, &mut screen, pos, dir, continuous::cast_ray);
+    core::render(map, &mut screen, wall, pos, dir, continuous::cast_ray);
 }
 
 fn main() {

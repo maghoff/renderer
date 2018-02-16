@@ -10,7 +10,7 @@ const WALL_HEIGHT: f64 = 64.;
 const CEIL: Pixel = Pixel { r: 255, g: 0, b: 0, a: 255 };
 const FLOOR: Pixel = Pixel { r: 0, g: 0, b: 255, a: 255 };
 
-pub fn render<F>(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>, cast_ray: F)
+pub fn render<F>(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, wall: ArrayView2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>, cast_ray: F)
 where
     F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<(Vector2<f64>, f64)>
 {
@@ -54,22 +54,7 @@ where
         let dv = 64. / projected_height as f64;
         let mut v = ((mid - projected_height/2.).floor() - ceil as f64) * -dv;
         for y in ceil..floor {
-            let i = (u / 8. + v / 8.) as i32 & 1;
-            *screen.px(x, y) = if i == 0 {
-                Pixel {
-                    r: (255. * u / 64.) as u8,
-                    g: 255,
-                    b: 255 - (255. * v / 64.) as u8,
-                    a: 255,
-                }
-            } else {
-                Pixel {
-                    r: 64,
-                    g: 64,
-                    b: 64,
-                    a: 255,
-                }
-            };
+            *screen.px(x, y) = wall[[v as usize, u as usize]];
             v += dv;
         }
 
@@ -100,12 +85,13 @@ mod test {
             x   x\
             xxxxx"
         ).unwrap();
+        let texture = Array2::default((64, 64));
 
         let pos = Vector2::new(map.dim().1 as f64 / 2. * SQUARE_SZ, map.dim().0 as f64 / 2. * SQUARE_SZ);
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), pos, dir, continuous::cast_ray);
+            render(map, &mut screen.view_mut(), texture.view(), pos, dir, continuous::cast_ray);
         }
     }
 
@@ -121,12 +107,13 @@ mod test {
             x   x\
             xx xx"
         ).unwrap();
+        let texture = Array2::default((64, 64));
 
         let pos = Vector2::new(map.dim().1 as f64 / 2. * SQUARE_SZ, map.dim().0 as f64 / 2. * SQUARE_SZ);
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), pos, dir, continuous::cast_ray);
+            render(map, &mut screen.view_mut(), texture.view(), pos, dir, continuous::cast_ray);
         }
     }
 }
