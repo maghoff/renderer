@@ -8,12 +8,11 @@ const TAU: f64 = 2. * ::std::f64::consts::PI;
 const WALL_HEIGHT: f64 = 64.;
 
 const CEIL: Pixel = Pixel { r: 255, g: 0, b: 0, a: 255 };
-const WALL: Pixel = Pixel { r: 0, g: 255, b: 0, a: 255 };
 const FLOOR: Pixel = Pixel { r: 0, g: 0, b: 255, a: 255 };
 
 pub fn render<F>(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>, cast_ray: F)
 where
-    F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<Vector2<f64>>
+    F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<(Vector2<f64>, f64)>
 {
     // Hard-coded input:
     let projection_plane_width = 320.;
@@ -34,14 +33,14 @@ where
         // Add 0.5 dside to cast the ray in the center of the column
         let ray_dir = projection_plane_left + dside * 0.5 + dside * (x as f64);
 
-        let projected_height = match cast_ray(map, pos, ray_dir.normalize()) {
-            Some(intersection_point) => {
+        let (projected_height, u) = match cast_ray(map, pos, ray_dir.normalize()) {
+            Some((intersection_point, u)) => {
                 let z = (intersection_point - &pos).dot(dir);
                 let w = 1./z;
 
-                w * WALL_HEIGHT * distance_to_projection_plane
+                (w * WALL_HEIGHT * distance_to_projection_plane, u)
             },
-            None => 0.
+            None => (0., 0.)
         };
 
         let mid = screen.height() as f64 / 2.;
@@ -52,8 +51,14 @@ where
             *screen.px(x, y) = CEIL;
         }
 
+        let wall = Pixel {
+            r: (255. * u / 64.) as u8,
+            g: 255,
+            b: 0,
+            a: 255,
+        };
         for y in ceil..floor {
-            *screen.px(x, y) = WALL;
+            *screen.px(x, y) = wall;
         }
 
         for y in floor..screen.height() {

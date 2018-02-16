@@ -11,7 +11,7 @@ fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> Option<bool> {
     Some(map[[cell.y, cell.x]] == b'x')
 }
 
-fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
+fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64)> {
     assert!(dir.y >= 0.); // We're going south
     assert!(dir.x >= 0.); // We're going east
     assert!(dir.x >= dir.y); // Major direction is east
@@ -41,12 +41,16 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
             // have come to a different column on the map
             let dist = (intersection_y - o.y) / dir.y;
 
-            return Some(o + dir * dist);
+            let p = o + dir * dist;
+            let u = (1. + p.x / SQUARE_SZ).floor() * SQUARE_SZ - p.x;
+            return Some((p, u));
         }
 
         if is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
             // Intersection with vertical line
-            return Some(vec2(x as f64 * SQUARE_SZ, y));
+            let p = vec2(x as f64 * SQUARE_SZ, y);
+            let u = y - (y / SQUARE_SZ).floor() * SQUARE_SZ;
+            return Some((p, u));
         }
 
         y += step_y;
@@ -55,7 +59,7 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     return None;
 }
 
-fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
+fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64)> {
     assert!(dir.x >= 0.);
     assert!(dir.y >= 0.);
 
@@ -64,13 +68,13 @@ fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) 
             map.t(),
             vec2(o.y, o.x),
             vec2(dir.y, dir.x)
-        ).map(|v| vec2(v.y, v.x));
+        ).map(|(p, u)| (vec2(p.y, p.x), SQUARE_SZ-u));
     } else {
         cast_ray_south_east_east(map, o, dir)
     }
 }
 
-fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
+fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64)> {
     assert!(dir.x >= 0.);
 
     if dir.y < 0. {
@@ -80,13 +84,13 @@ fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) ->
             map,
             vec2(o.x, map_height - o.y),
             vec2(dir.x, -dir.y)
-        ).map(|v| vec2(v.x, map_height - v.y))
+        ).map(|(p, u)| (vec2(p.x, map_height - p.y), SQUARE_SZ-u))
     } else {
         cast_ray_south_east(map, o, dir)
     }
 }
 
-pub fn cast_ray(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<Vector2<f64>> {
+pub fn cast_ray(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64)> {
     if dir.x < 0. {
         let map_width = map.dim().1 as f64 * SQUARE_SZ;
         map.invert_axis(Axis(1));
@@ -94,7 +98,7 @@ pub fn cast_ray(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> 
             map,
             vec2(map_width - o.x, o.y),
             vec2(-dir.x, dir.y)
-        ).map(|v| vec2(map_width - v.x, v.y))
+        ).map(|(p, u)| (vec2(map_width - p.x, p.y), SQUARE_SZ-u))
     } else {
         cast_ray_east(map, o, dir)
     }
