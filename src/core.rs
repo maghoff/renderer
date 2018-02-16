@@ -51,14 +51,26 @@ where
             *screen.px(x, y) = CEIL;
         }
 
-        let wall = Pixel {
-            r: (255. * u / 64.) as u8,
-            g: 255,
-            b: 0,
-            a: 255,
-        };
+        let dv = 64. / projected_height as f64;
+        let mut v = ((mid - projected_height/2.).floor() - ceil as f64) * -dv;
         for y in ceil..floor {
-            *screen.px(x, y) = wall;
+            let i = (u / 8. + v / 8.) as i32 & 1;
+            *screen.px(x, y) = if i == 0 {
+                Pixel {
+                    r: (255. * u / 64.) as u8,
+                    g: 255,
+                    b: 255 - (255. * v / 64.) as u8,
+                    a: 255,
+                }
+            } else {
+                Pixel {
+                    r: 64,
+                    g: 64,
+                    b: 64,
+                    a: 255,
+                }
+            };
+            v += dv;
         }
 
         for y in floor..screen.height() {
