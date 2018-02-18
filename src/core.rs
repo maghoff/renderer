@@ -12,7 +12,7 @@ const FLOOR: Pixel = Pixel { r: 0, g: 0, b: 255, a: 255 };
 
 pub fn render<F>(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, wall: ArrayView2<Pixel>, pos: Vector2<f64>, dir: Vector2<f64>, cast_ray: F)
 where
-    F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<(Vector2<f64>, f64)>
+    F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)>
 {
     // Hard-coded input:
     let projection_plane_width = 320.;
@@ -34,7 +34,7 @@ where
         let ray_dir = projection_plane_left + dside * 0.5 + dside * (x as f64);
 
         let (projected_height, u) = match cast_ray(map, pos, ray_dir.normalize()) {
-            Some((intersection_point, u)) => {
+            Some((intersection_point, u, _tx)) => {
                 let z = (intersection_point - &pos).dot(dir);
                 let w = 1./z;
 
