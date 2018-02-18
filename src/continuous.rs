@@ -8,7 +8,7 @@ fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> Option<bool> {
     if cell.y < 0 || cell.y as usize >= map.dim().0 { return None; }
 
     let cell = cell.cast().unwrap();
-    Some(map[[cell.y, cell.x]] == b'x')
+    map[[cell.y, cell.x]] != 0
 }
 
 fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64)> {

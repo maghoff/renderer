@@ -41,20 +41,16 @@ Promise.all([wasm, textures]).then(([wasm, textures]) => {
 
     const map =
         "xxxxxxxxxxxxxxxx" +
-        "x   x          x" +
-        "x              x" +
-        "x   x          x" +
-        "xxxxx          x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
-        "x              x" +
+        "x   x x   x    x" +
+        "x     x        x" +
+        "x   x x   x    x" +
+        "xxxxx x   xxxx x" +
+        "x   x x   x  x x" +
+        "x   x x   x  x x" +
+        "x         x  x x" +
+        "x   x x   x    x" +
         "xxxxxxxxxxxxxxxx";
-    const mapWidth = 16, mapHeight = 14;
+    const mapWidth = 16, mapHeight = 10;
 
     // Do allocations up front, as they may invalidate mod.memory.buffer
     const screenByteSize = width * height * 4;
@@ -68,7 +64,7 @@ Promise.all([wasm, textures]).then(([wasm, textures]) => {
 
     // Data shared between JS and WASM:
     const mapBuf = new Uint8ClampedArray(mod.memory.buffer, mapPtr, mapByteSize);
-    for (let i = 0; i < mapByteSize; ++i) mapBuf[i] = map.charCodeAt(i);
+    for (let i = 0; i < mapByteSize; ++i) mapBuf[i] = (map[i] == 'x') ? 1 : 0;
 
     const screenBuf = new Uint8ClampedArray(mod.memory.buffer, screenPtr, screenByteSize);
     const img = new ImageData(screenBuf, width, height);

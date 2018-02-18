@@ -1,7 +1,7 @@
 'use strict';
 
-const OPEN = " ".charCodeAt(0);
-const WALL = "x".charCodeAt(0);
+const OPEN = 0;
+const WALL = 1;
 
 const gridSize = 64;
 
@@ -130,7 +130,7 @@ function drawMap(dom, map) {
         dom.appendChild(row);
 
         for (let x = 0; x < map.width; ++x) {
-            const cellClass = map.data[y*map.width + x] == WALL ? "map--cell--wall" : "map--cell--open";
+            const cellClass = map.data[y*map.width + x] != OPEN ? "map--cell--wall" : "map--cell--open";
 
             const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             el.setAttribute("x", gridSize * x);
