@@ -7,13 +7,16 @@ mod consts;
 mod continuous;
 mod core;
 mod screen;
+mod textures;
 
 use std::heap::{Alloc, Heap, Layout};
 use std::mem;
 use std::slice;
 
 use cgmath::Vector2;
-use ndarray::{ArrayView2, ArrayViewMut2, ArrayView4, ShapeBuilder};
+use ndarray::prelude::*;
+
+use textures::Textures;
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -64,16 +67,16 @@ pub fn fill(
             textures_width * textures_height
         )
     };
-    let textures = ArrayView4::from_shape(
-        (19, 6, 64, 64).strides((64*6*64, 64, 64*6, 1)),
+    let textures = ArrayView5::from_shape(
+        (19, 3, 2, 64, 64).strides((64*6*64, 64*2, 64, 64*6, 1)),
         textures_slice
     ).unwrap();
-    let wall: ArrayView2<screen::Pixel> = textures.slice(s![0, 0, .., ..]);
+    let textures = Textures::new(textures);
 
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(map, &mut screen, wall, pos, dir, continuous::cast_ray);
+    core::render(map, &mut screen, &textures, pos, dir, continuous::cast_ray);
 }
 
 fn main() {
