@@ -126,6 +126,10 @@ Promise.all([wasm, textures]).then(([wasm, textures]) => {
             width: mapWidth,
             height: mapHeight,
         },
+        {
+            focusPoint,
+            direction
+        },
         updateCamera,
         writeMap,
     );

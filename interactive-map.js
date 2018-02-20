@@ -50,20 +50,22 @@ function draggable(node, callback) {
     });
 }
 
-function initCamera(cameraDom, callback) {
-    const focusPoint = {
-        x: gridSize * 2.5,
-        y: gridSize * 2.5,
-    };
+function initCamera(cameraDom, initialState, callback) {
+    const arrowSize = 64;
 
-    const targetPoint = {
-        x: gridSize * 5.5,
-        y: gridSize * 2.5,
+    const focusPoint = {
+        x: initialState.focusPoint.x,
+        y: initialState.focusPoint.y,
     };
 
     let direction = {
-        x: 1,
-        y: 0,
+        x: initialState.direction.x,
+        y: initialState.direction.y,
+    };
+
+    const targetPoint = {
+        x: focusPoint.x + direction.x * 3 * gridSize,
+        y: focusPoint.y + direction.y * 3 * gridSize,
     };
 
     const dom = {
@@ -72,6 +74,21 @@ function initCamera(cameraDom, callback) {
         sightline: cameraDom.querySelector(".camera--sightline"),
         direction: cameraDom.querySelector(".camera--direction"),
     };
+
+    dom.focus.setAttribute("cx", focusPoint.x);
+    dom.focus.setAttribute("cy", focusPoint.y);
+    dom.sightline.setAttribute("x1", focusPoint.x);
+    dom.sightline.setAttribute("y1", focusPoint.y);
+
+    dom.target.setAttribute("cx", targetPoint.x);
+    dom.target.setAttribute("cy", targetPoint.y);
+    dom.sightline.setAttribute("x2", targetPoint.x);
+    dom.sightline.setAttribute("y2", targetPoint.y);
+
+    dom.direction.setAttribute("x1", focusPoint.x);
+    dom.direction.setAttribute("y1", focusPoint.y);
+    dom.direction.setAttribute("x2", focusPoint.x + direction.x * arrowSize);
+    dom.direction.setAttribute("y2", focusPoint.y + direction.y * arrowSize);
 
     function updateDirection() {
         const dirVec = {
@@ -84,10 +101,9 @@ function initCamera(cameraDom, callback) {
             y: dirVec.y / len,
         };
 
-        const scale = 64;
         const offset = {
-            x: direction.x * scale,
-            y: direction.y * scale,
+            x: direction.x * arrowSize,
+            y: direction.y * arrowSize,
         };
 
         dom.direction.setAttribute("x1", focusPoint.x);
@@ -179,7 +195,7 @@ function mapEditor(dom, map, writeMap) {
     });
 }
 
-function interactiveMap(svg, map, updateCamera, writeMap) {
+function interactiveMap(svg, map, camera, updateCamera, writeMap) {
     drawMap(svg.querySelector(".map"), map);
     drawGrid(svg.querySelector(".grid"), map);
 
@@ -193,6 +209,7 @@ function interactiveMap(svg, map, updateCamera, writeMap) {
 
     initCamera(
         svg.querySelector(".camera"),
+        camera,
         updateCamera
     );
 }
