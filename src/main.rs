@@ -4,8 +4,8 @@
 extern crate cgmath;
 
 mod consts;
-mod continuous;
 mod core;
+mod ray;
 mod screen;
 mod textures;
 
@@ -76,7 +76,7 @@ pub fn fill(
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(map, &mut screen, &textures, pos, dir, continuous::cast_ray);
+    core::render(map, &mut screen, &textures, pos, dir, ray::cast_ray);
 }
 
 fn main() {

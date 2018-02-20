@@ -75,7 +75,7 @@ mod test {
     use ndarray::prelude::*;
 
     use consts::*;
-    use continuous;
+    use ray::cast_ray;
 
     #[test]
     fn can_render() {
@@ -96,7 +96,7 @@ mod test {
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), &textures, pos, dir, continuous::cast_ray);
+            render(map, &mut screen.view_mut(), &textures, pos, dir, cast_ray);
         }
     }
 
@@ -119,7 +119,7 @@ mod test {
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), &textures, pos, dir, continuous::cast_ray);
+            render(map, &mut screen.view_mut(), &textures, pos, dir, cast_ray);
         }
     }
 }
