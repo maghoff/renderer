@@ -76,7 +76,7 @@ pub fn fill(
     let pos = Vector2::new(cx, cy);
     let dir = Vector2::new(dx, dy);
 
-    core::render(map, &mut screen, &textures, pos, dir, ray::cast_ray);
+    core::render(map, &mut screen, &textures, pos, dir);
 }
 
 fn main() {

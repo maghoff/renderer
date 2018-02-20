@@ -5,6 +5,7 @@ use ndarray::{ArrayView2, ArrayViewMut2};
 
 use screen::{Pixel, Screen};
 use textures::Textures;
+use ray::*;
 
 const TAU: f64 = 2. * ::std::f64::consts::PI;
 const WALL_HEIGHT: f64 = 64.;
@@ -12,10 +13,7 @@ const WALL_HEIGHT: f64 = 64.;
 const CEIL: Pixel = Pixel { r: 255, g: 0, b: 0, a: 255 };
 const FLOOR: Pixel = Pixel { r: 0, g: 0, b: 255, a: 255 };
 
-pub fn render<F>(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, textures: &Textures, pos: Vector2<f64>, dir: Vector2<f64>, cast_ray: F)
-where
-    F: Fn(ArrayView2<u8>, Vector2<f64>, Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)>
-{
+pub fn render(map: ArrayView2<u8>, screen: &mut ArrayViewMut2<Pixel>, textures: &Textures, pos: Vector2<f64>, dir: Vector2<f64>) {
     // Hard-coded input:
     let projection_plane_width = 320.;
     let fov = 60. * TAU / 360.;
@@ -42,7 +40,7 @@ where
 
                 (w * WALL_HEIGHT * distance_to_projection_plane, u, tx)
             },
-            None => (0., 0., 0)
+            None => continue
         };
 
         let mid = screen.height() as f64 / 2.;
@@ -75,7 +73,6 @@ mod test {
     use ndarray::prelude::*;
 
     use consts::*;
-    use ray::cast_ray;
 
     #[test]
     fn can_render() {
@@ -96,7 +93,7 @@ mod test {
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), &textures, pos, dir, cast_ray);
+            render(map, &mut screen.view_mut(), &textures, pos, dir);
         }
     }
 
@@ -119,7 +116,7 @@ mod test {
         for ang in 0..10 {
             let rad = ang as f64 * TAU / 10.;
             let dir = Vector2::new(rad.cos(), rad.sin());
-            render(map, &mut screen.view_mut(), &textures, pos, dir, cast_ray);
+            render(map, &mut screen.view_mut(), &textures, pos, dir);
         }
     }
 }

@@ -2,6 +2,7 @@ use cgmath::{vec2, Vector2};
 use ndarray::{ArrayView2, Axis};
 
 use consts::*;
+use textures::*;
 
 fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> Option<Option<u8>> {
     if cell.x < 0 || cell.x as usize >= map.dim().1 { return None; }
@@ -14,7 +15,7 @@ fn is_wall(map: ArrayView2<u8>, cell: &Vector2<i32>) -> Option<Option<u8>> {
     })
 }
 
-fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)> {
+fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, TextureSpec)> {
     assert!(dir.y >= 0.); // We're going south
     assert!(dir.x >= 0.); // We're going east
     assert!(dir.x >= dir.y); // Major direction is east
@@ -46,14 +47,14 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
 
             let p = o + dir * dist;
             let u = (1. + p.x / SQUARE_SZ).floor() * SQUARE_SZ - p.x;
-            return Some((p, u, tx));
+            return Some((p, u, TextureSpec { tx, side: Side::NorthSouth }));
         }
 
         if let Some(tx) = is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
             // Intersection with vertical line
             let p = vec2(x as f64 * SQUARE_SZ, y);
             let u = y - (y / SQUARE_SZ).floor() * SQUARE_SZ;
-            return Some((p, u, tx));
+            return Some((p, u, TextureSpec { tx, side: Side::WestEast }));
         }
 
         y += step_y;
@@ -62,7 +63,7 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     return None;
 }
 
-fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)> {
+fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, TextureSpec)> {
     assert!(dir.x >= 0.);
     assert!(dir.y >= 0.);
 
@@ -71,13 +72,13 @@ fn cast_ray_south_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) 
             map.t(),
             vec2(o.y, o.x),
             vec2(dir.y, dir.x)
-        ).map(|(p, u, tx)| (vec2(p.y, p.x), SQUARE_SZ-u, tx));
+        ).map(|(p, u, tx)| (vec2(p.y, p.x), SQUARE_SZ-u, tx.flipped()));
     } else {
         cast_ray_south_east_east(map, o, dir)
     }
 }
 
-fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)> {
+fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, TextureSpec)> {
     assert!(dir.x >= 0.);
 
     if dir.y < 0. {
@@ -93,7 +94,7 @@ fn cast_ray_east(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) ->
     }
 }
 
-pub fn cast_ray(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, u8)> {
+pub fn cast_ray(mut map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f64>) -> Option<(Vector2<f64>, f64, TextureSpec)> {
     if dir.x < 0. {
         let map_width = map.dim().1 as f64 * SQUARE_SZ;
         map.invert_axis(Axis(1));
