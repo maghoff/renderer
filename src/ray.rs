@@ -21,9 +21,6 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
     assert!(dir.x >= dir.y); // Major direction is east
     assert!(dir.x >= 0.7); // We can divide by x
 
-    let origin_cell: Vector2<i32> = (o / SQUARE_SZ).cast().unwrap();
-    if let Some(_) = is_wall(map, &origin_cell)? { return None; }
-
     let first_vertical_intersection_coord = {
         let dx = (o.x / SQUARE_SZ + 1.).floor() * SQUARE_SZ - o.x;
         let dist = dx / dir.x;
@@ -47,7 +44,10 @@ fn cast_ray_south_east_east(map: ArrayView2<u8>, o: Vector2<f64>, dir: Vector2<f
 
             let p = o + dir * dist;
             let u = (1. + p.x / SQUARE_SZ).floor() * SQUARE_SZ - p.x;
-            return Some((p, u, TextureSpec { tx, side: Side::NorthSouth }));
+
+            if dist > 0. {
+                return Some((p, u, TextureSpec { tx, side: Side::NorthSouth }));
+            }
         }
 
         if let Some(tx) = is_wall(map, &vec2(x, (y / SQUARE_SZ) as i32))? {
