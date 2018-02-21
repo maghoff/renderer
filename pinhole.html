@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="initial-scale=1">
+<title>Pinhole camera</title>
+<style>
+
+svg {
+    border: 1px solid #888;
+}
+
+.ray {
+    fill: none;
+    stroke-width: 1px;
+}
+
+.stop {
+    fill: none;
+    stroke: black;
+    stroke-width: 2px;
+}
+
+.edgebox {
+    stroke: none;
+}
+
+.controls {
+    display: inline-block;
+    vertical-align: top;
+}
+
+</style>
+</head>
+<body>
+
+<svg width="500px" height="500px" viewbox="0 0 500 500"><g class="rays"></g><g class="edges"></g></svg>
+<form class="controls">
+    <label>Rays: <input name="rays" type="number" value="0" autocomplete="off"></label><br/>
+    <label>Walls: <input name="walls" type="number" value="0" autocomplete="off"></label><br/>
+    <label>Aperture: <input name="aperture" type="number" value="300" autocomplete="off"></label><br/>
+    <button type=submit>Generate</button><br/>
+</form>
+
+<script>
+function createSvg(el) {
+    return document.createElementNS("http://www.w3.org/2000/svg", el);
+}
+
+function removeAllChildNodes(parent) {
+    while (parent.lastChild) {
+        parent.removeChild(parent.lastChild);
+    }
+}
+
+function posOnEdge(edge) {
+    const a = 500 * Math.random();
+    switch (edge) {
+        case 0: return { x: a, y: 0 };
+        case 1: return { x: 500, y: a };
+        case 2: return { x: a, y: 500 };
+        case 3: return { x: 0, y: a };
+        default: throw new Error(`Invalid edge ${JSON.stringify(edge)}`);
+    }
+}
+
+function lineIntersection(A, B) {
+    const a = A.from.x, b = A.from.y;
+    const c = A.to.x, d = A.to.y;
+    const p = B.from.x, q = B.from.y;
+    const r = B.to.x, s = B.to.y;
+
+    const det = (c - a) * (s - q) - (r - p) * (d - b);
+    if (det === 0) return null;
+
+    const lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+    const gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+
+    if (!(0 < lambda && lambda < 1 && 0 < gamma && gamma < 1)) return null;
+
+    return {
+        x: a + (c-a) * lambda,
+        y: b + (d-b) * lambda,
+    };
+}
+
+function generateRay(stopLines) {
+    const opacity = 0.3;
+
+    const originEdge = Math.floor(Math.random() * 4);
+    let targetEdge = Math.floor(Math.random() * 3);
+    if (targetEdge >= originEdge) targetEdge++;
+
+    const from = posOnEdge(originEdge);
+    let to = posOnEdge(targetEdge);
+
+    for (let stopLine of stopLines) {
+        const intersection = lineIntersection({ from, to }, stopLine);
+        if (intersection) to = intersection;
+    }
+
+    const angle = Math.atan2(from.y - 250, from.x - 250);
+    const color = `hsla(${angle * 180 / Math.PI}, 100%, 50%, ${opacity})`;
+
+    return { from, to, color, className: "ray" };
+}
+
+function rayRay(svg) {
+    const rays = svg.querySelector('.rays');
+
+    const form = document.querySelector("form");
+
+    const opening = form.elements.aperture.value;
+    const h = opening / 2;
+    const stopLines = [
+        { className: "stop", from: { x:  50, y:  50, }, to: { x:  50, y: 450, } },
+        { className: "stop", from: { x:  50, y:  50, }, to: { x: 150, y:  50, } },
+        { className: "stop", from: { x:  50, y: 450, }, to: { x: 150, y: 450, } },
+        { className: "stop", from: { x: 150, y:  50, }, to: { x: 150, y: 250 - h, } },
+        { className: "stop", from: { x: 150, y: 250 + h, }, to: { x: 150, y: 450, } },
+    ].slice(0, form.elements.walls.value);
+
+    function drawLine(lineSpec) {
+        const line = createSvg('line');
+        line.setAttribute('class', lineSpec.className);
+        line.setAttribute('x1', lineSpec.from.x);
+        line.setAttribute('y1', lineSpec.from.y);
+        line.setAttribute('x2', lineSpec.to.x);
+        line.setAttribute('y2', lineSpec.to.y);
+        if (lineSpec.color) line.setAttribute('stroke', lineSpec.color);
+        rays.appendChild(line);
+    }
+
+    removeAllChildNodes(rays);
+
+    for (let i = 0; i < form.elements.rays.value; i++) {
+        drawLine(generateRay(stopLines));
+    }
+
+    for (let stopLine of stopLines) {
+        drawLine(stopLine);
+    }
+}
+
+function generateEdges(svg) {
+    const edges = svg.querySelector('.edges');
+
+    const sz = 10;
+
+    function drawBox(b) {
+        const hue = Math.atan2(b.y + sz/2 - 250, b.x + sz/2 - 250) * 180/Math.PI;
+
+        const e = createSvg('rect');
+        e.className = 'edgebox';
+        e.setAttribute('x', b.x);
+        e.setAttribute('y', b.y);
+        e.setAttribute('width', sz);
+        e.setAttribute('height', sz);
+        e.setAttribute('fill', `hsl(${hue}, 100%, 50%)`);
+        edges.appendChild(e);
+    }
+
+    const n = 500/sz;
+    for (let i = 0; i < n - 1; ++i) {
+        drawBox({
+            x: i*sz,
+            y: 0,
+        });
+        drawBox({
+            x: (n-1-i)*sz,
+            y: 500-sz,
+        });
+
+        drawBox({
+            x: 500-sz,
+            y: i*sz,
+        });
+        drawBox({
+            x: 0,
+            y: (n-1-i)*sz,
+        });
+    }
+}
+
+function init() {
+    const svg = document.querySelector('svg');
+
+    document.querySelector('form').addEventListener('submit', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        rayRay(svg);
+    });
+
+    generateEdges(svg);
+    rayRay(svg);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
