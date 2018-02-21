@@ -73,6 +73,8 @@ function initCamera(cameraDom, initialState, callback) {
         target: cameraDom.querySelector(".camera--target"),
         sightline: cameraDom.querySelector(".camera--sightline"),
         direction: cameraDom.querySelector(".camera--direction"),
+        fovLeft: cameraDom.querySelector(".camera--fov--left"),
+        fovRight: cameraDom.querySelector(".camera--fov--right"),
     };
 
     dom.focus.setAttribute("cx", focusPoint.x);
@@ -85,10 +87,7 @@ function initCamera(cameraDom, initialState, callback) {
     dom.sightline.setAttribute("x2", targetPoint.x);
     dom.sightline.setAttribute("y2", targetPoint.y);
 
-    dom.direction.setAttribute("x1", focusPoint.x);
-    dom.direction.setAttribute("y1", focusPoint.y);
-    dom.direction.setAttribute("x2", focusPoint.x + direction.x * arrowSize);
-    dom.direction.setAttribute("y2", focusPoint.y + direction.y * arrowSize);
+    updateDirection();
 
     function updateDirection() {
         const dirVec = {
@@ -110,6 +109,27 @@ function initCamera(cameraDom, initialState, callback) {
         dom.direction.setAttribute("y1", focusPoint.y);
         dom.direction.setAttribute("x2", focusPoint.x + offset.x);
         dom.direction.setAttribute("y2", focusPoint.y + offset.y);
+
+        const TAU = Math.PI * 2;
+        const projection_plane_width = 320.;
+        const fov = 60. * TAU / 360.;
+        const projection_plane_half_width = projection_plane_width / 2.;
+        const distance_to_projection_plane = projection_plane_half_width / Math.tan(fov / 2.);
+
+        const side = {
+            x: -direction.y,
+            y: direction.x,
+        }
+
+        dom.fovLeft.setAttribute("x1", focusPoint.x);
+        dom.fovLeft.setAttribute("y1", focusPoint.y);
+        dom.fovLeft.setAttribute("x2", focusPoint.x + direction.x * distance_to_projection_plane - side.x * projection_plane_half_width);
+        dom.fovLeft.setAttribute("y2", focusPoint.y + direction.y * distance_to_projection_plane - side.y * projection_plane_half_width);
+
+        dom.fovRight.setAttribute("x1", focusPoint.x);
+        dom.fovRight.setAttribute("y1", focusPoint.y);
+        dom.fovRight.setAttribute("x2", focusPoint.x + direction.x * distance_to_projection_plane + side.x * projection_plane_half_width);
+        dom.fovRight.setAttribute("y2", focusPoint.y + direction.y * distance_to_projection_plane + side.y * projection_plane_half_width);
     }
 
     draggable(cameraDom.querySelector(".camera--target"), (x, y) => {

@@ -10,6 +10,11 @@
     stroke-dasharray: 5, 5;
 }
 
+.camera--fov--left, .camera--fov--right {
+    stroke: #41f4a9;
+    stroke-width: 3;
+}
+
 .camera--focus {
     cursor: grab;
     fill: #42a1f4;
