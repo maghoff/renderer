@@ -77,18 +77,6 @@ function initCamera(cameraDom, initialState, callback) {
         fovRight: cameraDom.querySelector(".camera--fov--right"),
     };
 
-    dom.focus.setAttribute("cx", focusPoint.x);
-    dom.focus.setAttribute("cy", focusPoint.y);
-    dom.sightline.setAttribute("x1", focusPoint.x);
-    dom.sightline.setAttribute("y1", focusPoint.y);
-
-    dom.target.setAttribute("cx", targetPoint.x);
-    dom.target.setAttribute("cy", targetPoint.y);
-    dom.sightline.setAttribute("x2", targetPoint.x);
-    dom.sightline.setAttribute("y2", targetPoint.y);
-
-    updateDirection();
-
     function updateDirection() {
         const dirVec = {
             x: targetPoint.x - focusPoint.x,
@@ -157,6 +145,18 @@ function initCamera(cameraDom, initialState, callback) {
 
         callback(focusPoint, direction);
     });
+
+    dom.focus.setAttribute("cx", focusPoint.x);
+    dom.focus.setAttribute("cy", focusPoint.y);
+    dom.sightline.setAttribute("x1", focusPoint.x);
+    dom.sightline.setAttribute("y1", focusPoint.y);
+
+    dom.target.setAttribute("cx", targetPoint.x);
+    dom.target.setAttribute("cy", targetPoint.y);
+    dom.sightline.setAttribute("x2", targetPoint.x);
+    dom.sightline.setAttribute("y2", targetPoint.y);
+
+    updateDirection();
 }
 
 function drawMap(dom, map) {
