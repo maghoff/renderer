@@ -50,6 +50,10 @@ function draggable(node, callback) {
     });
 }
 
+function length(v) {
+    return Math.sqrt(v.x*v.x + v.y*v.y);
+}
+
 function initCamera(cameraDom, initialState, callback) {
     const arrowSize = 64;
 
@@ -146,17 +150,44 @@ function initCamera(cameraDom, initialState, callback) {
         callback(focusPoint, direction);
     });
 
-    dom.focus.setAttribute("cx", focusPoint.x);
-    dom.focus.setAttribute("cy", focusPoint.y);
-    dom.sightline.setAttribute("x1", focusPoint.x);
-    dom.sightline.setAttribute("y1", focusPoint.y);
+    function updateDom() {
+        dom.focus.setAttribute("cx", focusPoint.x);
+        dom.focus.setAttribute("cy", focusPoint.y);
+        dom.sightline.setAttribute("x1", focusPoint.x);
+        dom.sightline.setAttribute("y1", focusPoint.y);
 
-    dom.target.setAttribute("cx", targetPoint.x);
-    dom.target.setAttribute("cy", targetPoint.y);
-    dom.sightline.setAttribute("x2", targetPoint.x);
-    dom.sightline.setAttribute("y2", targetPoint.y);
+        dom.target.setAttribute("cx", targetPoint.x);
+        dom.target.setAttribute("cy", targetPoint.y);
+        dom.sightline.setAttribute("x2", targetPoint.x);
+        dom.sightline.setAttribute("y2", targetPoint.y);
 
-    updateDirection();
+        updateDirection();
+    }
+    updateDom();
+
+    return (newFocusPoint, newDirection) => {
+        const sightlineLength = Math.min(
+            Math.max(
+                length({
+                    x: targetPoint.x - focusPoint.x,
+                    y: targetPoint.y - focusPoint.y,
+                }),
+                128
+            ),
+            512
+        );
+
+        focusPoint.x = newFocusPoint.x;
+        focusPoint.y = newFocusPoint.y;
+
+        direction.x = newDirection.x;
+        direction.y = newDirection.y;
+
+        targetPoint.x = focusPoint.x + sightlineLength * direction.x;
+        targetPoint.y = focusPoint.y + sightlineLength * direction.y;
+
+        updateDom();
+    };
 }
 
 function drawMap(dom, map) {
@@ -227,9 +258,13 @@ function interactiveMap(svg, map, camera, updateCamera, writeMap) {
         writeMap(cell, value);
     });
 
-    initCamera(
+    const u = initCamera(
         svg.querySelector(".camera"),
         camera,
         updateCamera
     );
+
+    return {
+        updateCamera: u
+    }
 }
