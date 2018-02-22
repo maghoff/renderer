@@ -241,7 +241,7 @@ function mapEditor(dom, map, writeMap) {
         };
 
         const prev = map.data[cell.y * map.width + cell.x];
-        const next = prev == WALL ? OPEN : WALL;
+        const next = prev == OPEN ? WALL : OPEN;
         writeMap(cell, next);
     });
 }
