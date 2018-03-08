@@ -1,3 +1,5 @@
+I live-coded this renderer at RevolverConf 2018.1: <https://www.youtube.com/watch?v=LuUb9Hrl-LQ>
+
 Development
 ===========
 
